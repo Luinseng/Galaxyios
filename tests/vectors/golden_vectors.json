@@ -1,0 +1,68 @@
+{
+  "frame_ping": {
+    "messageType": 3,
+    "flags": 1,
+    "requestId": 42,
+    "sequence": 7,
+    "chunkIndex": 0,
+    "totalChunks": 1,
+    "payloadB64": "eyJzZXEiOjd9",
+    "authKeyHex": "4242424242424242424242424242424242424242424242424242424242424242",
+    "encodedHex": "4752010300010000002a000000070000000100097b22736571223a377d5a0303d49263d2f9af1d72569800a929380866433454cc5f330411feea4591dc"
+  },
+  "frame_frag0": {
+    "messageType": 14,
+    "flags": 8,
+    "requestId": 9,
+    "sequence": 3,
+    "chunkIndex": 0,
+    "totalChunks": 3,
+    "payloadB64": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/wABAgMEBQYHCAkKCwwNDg8QERITFBUWFxgZGhscHR4fICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj9AQUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVpbXF1eX2BhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ent8fX5/gIGCg4SFhoeIiYqLjI2Oj5CRkpOUlZaXmJmam5ydnp+goaKjpKWmp6ipqqusra6vsLGys7S1tre4ubq7vL2+v8DBwsPExcbHyMnKy8zNzs/Q0dLT1NXW19jZ2tvc3d7f4OHi4+Tl5ufo6err7O3u7/Dx8vP09fb3+Pn6+/z9/v8=",
+    "authKeyHex": "4242424242424242424242424242424242424242424242424242424242424242",
+    "encodedHex": "4752010e00080000000900000003000000030200000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeffd4c4e55e4cf70ac47fbab6009dba2b4452b64808a93acefd4e803a5a8076ac22"
+  },
+  "hmac_frame_auth": {
+    "keyHex": "4242424242424242424242424242424242424242424242424242424242424242",
+    "headerHex": "4752010300010000002a00000007000000010009",
+    "payloadB64": "eyJzZXEiOjd9",
+    "tagHex": "5a0303d49263d2f9af1d72569800a929380866433454cc5f330411feea4591dc"
+  },
+  "hkdf_session": {
+    "ikmHex": "4ebefdfbd001fa39adab23d4e7e3056d7b5214f80aa415298eb2ebcd47c200580101010101010101010101010101010102020202020202020202020202020202",
+    "saltAscii": "Gearan-Link-0.1",
+    "infoAscii": "session",
+    "length": 32,
+    "okmHex": "30c063d5cbd192d1750c09dbf7b317720c3b51f2c2e717c518a21810b09a8687"
+  },
+  "hkdf_appkeys": {
+    "ikmHex": "30c063d5cbd192d1750c09dbf7b317720c3b51f2c2e717c518a21810b09a8687",
+    "saltAscii": "Gearan-AppKeys-0.1",
+    "infoAscii": "keys",
+    "length": 64,
+    "encKeyHex": "3d5d73ebced7c21ba724dc2b87e98839e3bffdd0b8c9e317b22e25e45ab71512",
+    "macKeyHex": "e64de13ddc53446850e63242da30da808a6082ee0c31b9cc1646859b494d3ebe"
+  },
+  "chunking": {
+    "messageBytes": 1536,
+    "maxFramePayload": 512,
+    "totalChunks": 3,
+    "chunkSizes": [
+      512,
+      512,
+      512
+    ]
+  },
+  "sas": {
+    "transcriptHex": "32778811c1cf3809ff628349ac1a10d2f8eaa2be041a48ccf4fba09ae601638a",
+    "sas": "085775"
+  },
+  "aes_gcm_nist_case2": {
+    "source": "NIST SP 800-38D D.2, Test Case 2 (AES-128-GCM, empty AAD)",
+    "keyHex": "00000000000000000000000000000000",
+    "ivHex": "000000000000000000000000",
+    "plaintextHex": "00000000000000000000000000000000",
+    "ciphertextHex": "0388dace60b6a392f328c2b971b2fe78",
+    "tagHex": "ab6e47d42cec13bdf53a67b21257bddf",
+    "gearanFormat": "payload = nonce(12B) || ciphertext || tag(16B)"
+  }
+}

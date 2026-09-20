@@ -1,0 +1,2 @@
+-keep class com.gearan.watch.** { *; }
+-dontwarn javax.crypto.**

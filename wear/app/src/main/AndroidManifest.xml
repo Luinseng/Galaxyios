@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+      Watch4 Classic = API 30 (Wear OS 3):
+      - API <= 30: BLE needs BLUETOOTH + BLUETOOTH_ADMIN + ACCESS_FINE_LOCATION (runtime).
+      - API >= 31: runtime permissions BLUETOOTH_SCAN (neverForLocation: no location
+        derivation, scan is UUID-filtered) + BLUETOOTH_ADVERTISE + BLUETOOTH_CONNECT.
+      See BlePermissions.kt for the runtime request flow.
+    -->
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-permission android:name="android.permission.BODY_SENSORS" />
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-feature android:name="android.hardware.bluetooth_le" android:required="true" />
+    <uses-feature android:name="android.hardware.type.watch" android:required="true" />
+
+    <application
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="Gearan"
+        android:theme="@android:style/Theme.DeviceDefault">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:taskAffinity="">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <service
+            android:name=".ble.GearanPeripheralService"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
+        <!-- Boot restore: service only, never a visible activity. -->
+        <receiver
+            android:name=".ble.GearanBootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+        <uses-library android:name="com.google.android.wearable" android:required="false" />
+    </application>
+</manifest>
