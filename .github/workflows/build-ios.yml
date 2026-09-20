@@ -21,6 +21,7 @@ jobs:
         run: xcodebuild -project Gearan.xcodeproj -list
       - name: Build Gearan for iphoneos (no signing)
         run: |
+          set -o pipefail
           xcodebuild \
             -project Gearan.xcodeproj \
             -scheme Gearan \
@@ -31,7 +32,20 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="-" \
             DEVELOPMENT_TEAM="" \
-            build
+            build 2>&1 | tee build/xcodebuild.log
+      - name: Surface xcodebuild errors as annotations
+        if: failure()
+        run: |
+          grep -E "error:|FAILED|failed" build/xcodebuild.log | head -n 25 | while IFS= read -r line; do echo "::error::$line"; done
+          echo "--- tail ---"
+          tail -n 30 build/xcodebuild.log
+      - name: Upload xcodebuild log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Gearan-iOS-BuildLog
+          path: ios/build/xcodebuild.log
+          if-no-files-found: warn
       - name: Package unsigned IPA
         run: |
           APP_PATH=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name "Gearan.app" | head -n 1)
