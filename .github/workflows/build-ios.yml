@@ -21,6 +21,7 @@ jobs:
         run: xcodebuild -project Gearan.xcodeproj -list
       - name: Build Gearan for iphoneos (no signing)
         run: |
+          mkdir -p build
           set -o pipefail
           xcodebuild \
             -project Gearan.xcodeproj \
