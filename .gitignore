@@ -22,6 +22,8 @@ DerivedData/
 *.p12
 *.pfx
 *.cer
+*.key
+*.pem
 *.mobileprovision
 *.provisionprofile
 ExportOptions.plist
