@@ -73,6 +73,23 @@ public enum GearanLink {
         }
     }
 
+    // MARK: - Big-endian helpers (kept granular: the type-checker explodes
+    // on long chained shift/or expressions, so no one-liners here).
+    static func u16be(_ hi: UInt8, _ lo: UInt8) -> UInt16 {
+        let h = UInt16(hi) << 8
+        let l = UInt16(lo)
+        return h | l
+    }
+
+    static func u32be(_ b0: UInt8, _ b1: UInt8, _ b2: UInt8, _ b3: UInt8) -> UInt32 {
+        let w0 = UInt32(b0) << 24
+        let w1 = UInt32(b1) << 16
+        let w2 = UInt32(b2) << 8
+        let w3 = UInt32(b3)
+        let hi = w0 | w1
+        let lo = w2 | w3
+        return hi | lo
+    }
     static func hmac(key: Data, header: Data, payload: Data) -> Data {
         let k = SymmetricKey(data: key)
         var m = HMAC<SHA256>(key: k)
@@ -102,12 +119,12 @@ public enum GearanLink {
         guard b[0] == magic0 && b[1] == magic1 else { throw CodecError.badMagic }
         guard b[2] == version else { throw CodecError.badVersion }
         let type = b[3]
-        let flags = (UInt16(b[4]) << 8) | UInt16(b[5])
-        let req = (UInt32(b[6]) << 24) | (UInt32(b[7]) << 16) | (UInt32(b[8]) << 8) | UInt32(b[9])
-        let seq = (UInt32(b[10]) << 24) | (UInt32(b[11]) << 16) | (UInt32(b[12]) << 8) | UInt32(b[13])
-        let cidx = (UInt16(b[14]) << 8) | UInt16(b[15])
-        let total = (UInt16(b[16]) << 8) | UInt16(b[17])
-        let plen = Int((UInt16(b[18]) << 8) | UInt16(b[19]))
+        let flags = u16be(b[4], b[5])
+        let req = u32be(b[6], b[7], b[8], b[9])
+        let seq = u32be(b[10], b[11], b[12], b[13])
+        let cidx = u16be(b[14], b[15])
+        let total = u16be(b[16], b[17])
+        let plen = Int(u16be(b[18], b[19]))
         guard total >= 1 && cidx < total else { throw CodecError.badChunks }
         guard plen <= maxFramePayload else { throw CodecError.tooLarge }
         guard data.count >= headerLen + plen + authLen else { throw CodecError.truncated }
@@ -134,7 +151,7 @@ public enum GearanLink {
     /// SAS: 6 digits from SHA256(transcript). Human anti-MITM only, never a key.
     public static func sas(transcript: Data) -> String {
         let d = SHA256.hash(data: transcript)
-        let v = (UInt32(d[d.startIndex]) << 24) | (UInt32(d[d.startIndex + 1]) << 16) | (UInt32(d[d.startIndex + 2]) << 8) | UInt32(d[d.startIndex + 3])
+        let v = u32be(d[d.startIndex], d[d.startIndex + 1], d[d.startIndex + 2], d[d.startIndex + 3])
         return String(format: "%06d", v % 1_000_000)
     }
 
