@@ -1,0 +1,460 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		600000000000000000000001 /* GearanLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000001 /* GearanLink.swift */; };
+		600000000000000000000002 /* GearanPairingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000002 /* GearanPairingManager.swift */; };
+		600000000000000000000003 /* GearanSecureSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000003 /* GearanSecureSession.swift */; };
+		600000000000000000000004 /* TrustedDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000004 /* TrustedDevice.swift */; };
+		600000000000000000000005 /* TrustedDeviceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000005 /* TrustedDeviceStore.swift */; };
+		600000000000000000000006 /* AutoReconnect.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000006 /* AutoReconnect.swift */; };
+		600000000000000000000007 /* NetworkRelay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000007 /* NetworkRelay.swift */; };
+		600000000000000000000008 /* Diagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000008 /* Diagnostics.swift */; };
+		600000000000000000000009 /* GearanLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000009 /* GearanLog.swift */; };
+		60000000000000000000000A /* GearanStageError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50000000000000000000000A /* GearanStageError.swift */; };
+		60000000000000000000000B /* GearanSyncEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50000000000000000000000B /* GearanSyncEngine.swift */; };
+		60000000000000000000000C /* BLEScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50000000000000000000000C /* BLEScanner.swift */; };
+		60000000000000000000000D /* GearanConnectionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50000000000000000000000D /* GearanConnectionManager.swift */; };
+		60000000000000000000000E /* GearanAutoReconnectManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50000000000000000000000E /* GearanAutoReconnectManager.swift */; };
+		60000000000000000000000F /* GearanApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50000000000000000000000F /* GearanApp.swift */; };
+		600000000000000000000010 /* GearanCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 500000000000000000000011 /* GearanCore.framework */; };
+		600000000000000000000011 /* GearanCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 500000000000000000000011 /* GearanCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		230000000000000000000002 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 100000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 200000000000000000000001;
+			remoteInfo = GearanCore;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		220000000000000000000004 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				600000000000000000000011 /* GearanCore.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		500000000000000000000001 /* GearanLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GearanLink.swift; sourceTree = "<group>"; };
+		500000000000000000000002 /* GearanPairingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GearanPairingManager.swift; sourceTree = "<group>"; };
+		500000000000000000000003 /* GearanSecureSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GearanSecureSession.swift; sourceTree = "<group>"; };
+		500000000000000000000004 /* TrustedDevice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrustedDevice.swift; sourceTree = "<group>"; };
+		500000000000000000000005 /* TrustedDeviceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrustedDeviceStore.swift; sourceTree = "<group>"; };
+		500000000000000000000006 /* AutoReconnect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoReconnect.swift; sourceTree = "<group>"; };
+		500000000000000000000007 /* NetworkRelay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkRelay.swift; sourceTree = "<group>"; };
+		500000000000000000000008 /* Diagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Diagnostics.swift; sourceTree = "<group>"; };
+		500000000000000000000009 /* GearanLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GearanLog.swift; sourceTree = "<group>"; };
+		50000000000000000000000A /* GearanStageError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GearanStageError.swift; sourceTree = "<group>"; };
+		50000000000000000000000B /* GearanSyncEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GearanSyncEngine.swift; sourceTree = "<group>"; };
+		50000000000000000000000C /* BLEScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEScanner.swift; sourceTree = "<group>"; };
+		50000000000000000000000D /* GearanConnectionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GearanConnectionManager.swift; sourceTree = "<group>"; };
+		50000000000000000000000E /* GearanAutoReconnectManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GearanAutoReconnectManager.swift; sourceTree = "<group>"; };
+		50000000000000000000000F /* GearanApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GearanApp.swift; sourceTree = "<group>"; };
+		500000000000000000000010 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		500000000000000000000011 /* GearanCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = GearanCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		500000000000000000000012 /* Gearan.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Gearan.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		220000000000000000000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				600000000000000000000010 /* GearanCore.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		400000000000000000000001 /* Gearan */ = {
+			isa = PBXGroup;
+			children = (
+				400000000000000000000002 /* Sources */,
+				400000000000000000000005 /* Gearan */,
+				400000000000000000000007 /* Frameworks */,
+				400000000000000000000006 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		400000000000000000000002 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				400000000000000000000003 /* GearanCore */,
+				400000000000000000000004 /* GearanApp */,
+			);
+			sourceTree = "<group>";
+		};
+		400000000000000000000003 /* GearanCore */ = {
+			isa = PBXGroup;
+			children = (
+				500000000000000000000001 /* GearanLink.swift */,
+				500000000000000000000002 /* GearanPairingManager.swift */,
+				500000000000000000000003 /* GearanSecureSession.swift */,
+				500000000000000000000004 /* TrustedDevice.swift */,
+				500000000000000000000005 /* TrustedDeviceStore.swift */,
+				500000000000000000000006 /* AutoReconnect.swift */,
+				500000000000000000000007 /* NetworkRelay.swift */,
+				500000000000000000000008 /* Diagnostics.swift */,
+				500000000000000000000009 /* GearanLog.swift */,
+				50000000000000000000000A /* GearanStageError.swift */,
+				50000000000000000000000B /* GearanSyncEngine.swift */,
+			);
+			path = Sources/GearanCore;
+			sourceTree = "<group>";
+		};
+		400000000000000000000004 /* GearanApp */ = {
+			isa = PBXGroup;
+			children = (
+				50000000000000000000000C /* BLEScanner.swift */,
+				50000000000000000000000D /* GearanConnectionManager.swift */,
+				50000000000000000000000E /* GearanAutoReconnectManager.swift */,
+				50000000000000000000000F /* GearanApp.swift */,
+			);
+			path = Sources/GearanApp;
+			sourceTree = "<group>";
+		};
+		400000000000000000000005 /* Gearan */ = {
+			isa = PBXGroup;
+			children = (
+				500000000000000000000010 /* Info.plist */,
+			);
+			path = Gearan;
+			sourceTree = "<group>";
+		};
+		400000000000000000000006 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				500000000000000000000012 /* Gearan.app */,
+				500000000000000000000011 /* GearanCore.framework */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		400000000000000000000007 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				500000000000000000000011 /* GearanCore.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		200000000000000000000001 /* GearanCore */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 300000000000000000000002 /* Build configuration list for PBXNativeTarget "GearanCore" */;
+			buildPhases = (
+				210000000000000000000001 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = GearanCore;
+			productName = GearanCore;
+			productReference = 500000000000000000000011 /* GearanCore.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		200000000000000000000002 /* Gearan */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 300000000000000000000003 /* Build configuration list for PBXNativeTarget "Gearan" */;
+			buildPhases = (
+				220000000000000000000001 /* Sources */,
+				220000000000000000000002 /* Frameworks */,
+				220000000000000000000003 /* Resources */,
+				220000000000000000000004 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				230000000000000000000001 /* PBXTargetDependency */,
+			);
+			name = Gearan;
+			productName = Gearan;
+			productReference = 500000000000000000000012 /* Gearan.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		100000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					200000000000000000000001 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+					200000000000000000000002 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = 300000000000000000000001 /* Build configuration list for PBXProject "Gearan" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 400000000000000000000001 /* Gearan */;
+			productRefGroup = 400000000000000000000006 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				200000000000000000000001 /* GearanCore */,
+				200000000000000000000002 /* Gearan */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		220000000000000000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		210000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				600000000000000000000001 /* GearanLink.swift in Sources */,
+				600000000000000000000002 /* GearanPairingManager.swift in Sources */,
+				600000000000000000000003 /* GearanSecureSession.swift in Sources */,
+				600000000000000000000004 /* TrustedDevice.swift in Sources */,
+				600000000000000000000005 /* TrustedDeviceStore.swift in Sources */,
+				600000000000000000000006 /* AutoReconnect.swift in Sources */,
+				600000000000000000000007 /* NetworkRelay.swift in Sources */,
+				600000000000000000000008 /* Diagnostics.swift in Sources */,
+				600000000000000000000009 /* GearanLog.swift in Sources */,
+				60000000000000000000000A /* GearanStageError.swift in Sources */,
+				60000000000000000000000B /* GearanSyncEngine.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		220000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				60000000000000000000000C /* BLEScanner.swift in Sources */,
+				60000000000000000000000D /* GearanConnectionManager.swift in Sources */,
+				60000000000000000000000E /* GearanAutoReconnectManager.swift in Sources */,
+				60000000000000000000000F /* GearanApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		230000000000000000000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 200000000000000000000001 /* GearanCore */;
+			targetProxy = 230000000000000000000002 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		310000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		310000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		310000000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.gearan.GearanCore;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		310000000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.gearan.GearanCore;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		310000000000000000000005 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Gearan/Info.plist;
+				INFOPLIST_KEY_UIDeviceFamily = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.gearan.ios;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		310000000000000000000006 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Gearan/Info.plist;
+				INFOPLIST_KEY_UIDeviceFamily = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.gearan.ios;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		300000000000000000000001 /* Build configuration list for PBXProject "Gearan" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				310000000000000000000001 /* Debug */,
+				310000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		300000000000000000000002 /* Build configuration list for PBXNativeTarget "GearanCore" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				310000000000000000000003 /* Debug */,
+				310000000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		300000000000000000000003 /* Build configuration list for PBXNativeTarget "Gearan" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				310000000000000000000005 /* Debug */,
+				310000000000000000000006 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 100000000000000000000001 /* Project object */;
+}

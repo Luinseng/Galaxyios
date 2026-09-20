@@ -1,0 +1,44 @@
+# ---> Python / shared
+__pycache__/
+.pytest_cache/
+venv/
+# ---> Android / Wear OS
+wear/.gradle/
+wear/build/
+wear/app/build/
+wear/local.properties
+*.apk
+*.aab
+# ---> iOS / Xcode
+ios/build/
+ios/.build/
+ios/Gearan-unsigned.ipa
+ios/build/export/
+ios/*.xcarchive
+DerivedData/
+*.xcuserdata/
+*.xcuserstate
+# ---> Apple signing secrets (NEVER commit)
+*.p12
+*.pfx
+*.cer
+*.mobileprovision
+*.provisionprofile
+ExportOptions.plist
+certificate.p12
+profile.mobileprovision
+.env
+# ---> Node (se tooling futuro)
+node_modules/
+# ---> OS
+.DS_Store
+Thumbs.db
+# ---> Secrets locali (mai committare chiavi reali)
+*.jks
+*.keystore
+*.p8
+*.p12
+*.mobileprovision
+# ---> Build outputs
+build/
+.gradle/

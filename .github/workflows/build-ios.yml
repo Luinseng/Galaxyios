@@ -1,0 +1,133 @@
+name: build-ios
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  unsigned:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: ios
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain versions
+        run: |
+          xcodebuild -version
+          swift --version
+      - name: List schemes (must include Gearan)
+        run: xcodebuild -project Gearan.xcodeproj -list
+      - name: Build Gearan for iphoneos (no signing)
+        run: |
+          xcodebuild \
+            -project Gearan.xcodeproj \
+            -scheme Gearan \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination "generic/platform=iOS" \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
+      - name: Package unsigned IPA
+        run: |
+          APP_PATH=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name "Gearan.app" | head -n 1)
+          if [ -z "$APP_PATH" ]; then
+            echo "Gearan.app not found under build/Build/Products/Release-iphoneos"
+            find build/Build/Products -maxdepth 2 | head -n 50
+            exit 1
+          fi
+          echo "Found $APP_PATH"
+          rm -rf Payload Gearan-unsigned.ipa
+          mkdir Payload
+          cp -R "$APP_PATH" Payload/
+          zip -r Gearan-unsigned.ipa Payload
+      - name: Upload unsigned IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Gearan-iOS-Unsigned
+          path: ios/Gearan-unsigned.ipa
+          if-no-files-found: error
+
+  # Optional lane: signed IPA. Runs ONLY when Apple signing secrets exist
+  # (repo Settings → Secrets and variables → Actions). Nothing signing-related
+  # is committed: no certificates, no profiles, no passwords.
+  # Required secrets: APPLE_CERTIFICATE_BASE64 (.p12), APPLE_CERTIFICATE_PASSWORD,
+  # APPLE_PROVISIONING_PROFILE_BASE64 (.mobileprovision for com.gearan.ios),
+  # APPLE_TEAM_ID. Without them this job is skipped and `unsigned` still ships.
+  signed:
+    runs-on: macos-latest
+    if: ${{ secrets.APPLE_CERTIFICATE_BASE64 != '' && secrets.APPLE_PROVISIONING_PROFILE_BASE64 != '' }}
+    defaults:
+      run:
+        working-directory: ios
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install certificate and profile
+        env:
+          CERT_B64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          CERT_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          PROFILE_B64: ${{ secrets.APPLE_PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          echo "$CERT_B64" | base64 --decode > certificate.p12
+          echo "$PROFILE_B64" | base64 --decode > profile.mobileprovision
+          KEYCHAIN=gearan-signing.keychain-db
+          security create-keychain -p actions "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p actions "$KEYCHAIN"
+          security import certificate.p12 -k "$KEYCHAIN" -P "$CERT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k actions "$KEYCHAIN"
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+          PROFILE_NAME=$(security cms -D -i profile.mobileprovision | /usr/libexec/PlistBuddy -c "Print :Name" /dev/stdin)
+          echo "PROFILE_NAME=$PROFILE_NAME" >> $GITHUB_ENV
+          IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN" | head -n 1 | sed -E 's/.*"([^"]+)".*/\1/')
+          echo "IDENTITY=$IDENTITY" >> $GITHUB_ENV
+      - name: Archive (manual signing)
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          xcodebuild \
+            -project Gearan.xcodeproj \
+            -scheme Gearan \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination "generic/platform=iOS" \
+            -archivePath build/Gearan.xcarchive \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
+            CODE_SIGN_IDENTITY="$IDENTITY" \
+            archive
+      - name: Export signed IPA
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          cat > ExportOptions.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>ad-hoc</string>
+            <key>teamID</key><string>$APPLE_TEAM_ID</string>
+            <key>signingStyle</key><string>manual</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>com.gearan.ios</key><string>$PROFILE_NAME</string>
+            </dict>
+          </dict>
+          </plist>
+          EOF
+          xcodebuild -exportArchive \
+            -archivePath build/Gearan.xcarchive \
+            -exportPath build/export \
+            -exportOptionsPlist ExportOptions.plist
+      - name: Upload signed IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Gearan-iOS-Signed
+          path: ios/build/export/*.ipa
+          if-no-files-found: error

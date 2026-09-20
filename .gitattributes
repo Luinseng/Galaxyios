@@ -1,0 +1,11 @@
+# Line endings: gradlew MUST stay LF or Ubuntu runners fail with
+# "/bin/sh^M: bad interpreter".
+* text=auto
+wear/gradlew text eol=lf
+*.sh text eol=lf
+*.swift text eol=lf
+*.kt text eol=lf
+*.kts text eol=lf
+*.py text eol=lf
+*.pbxproj text eol=lf
+*.xcscheme text eol=lf
