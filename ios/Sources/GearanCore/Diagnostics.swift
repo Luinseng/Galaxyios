@@ -19,6 +19,15 @@ public struct DiagnosticsSnapshot: Codable, Equatable {
     public init() {}
 }
 
+extension DiagnosticsSnapshot: CustomDebugStringConvertible {
+    /// Redacted one-line summary for Export Diagnostics (no secrets by construction).
+    public var debugDescription: String {
+        "Gearan diag model=\(watchModel) conn=\(connectionStatus) pair=\(pairingState) " +
+        "proto=\(protocolVersion) bt=\(bluetoothState) mtu=\(mtu) " +
+        "tx=\(txBytes) rx=\(rxBytes) retries=\(packetRetries) caps=\(capabilities.joined(separator: ","))"
+    }
+}
+
 /// ANCS probe: experimental. Real availability decided on hardware via service
 /// discovery; default UNAVAILABLE until a field test confirms otherwise.
 public enum AncsProbe {
