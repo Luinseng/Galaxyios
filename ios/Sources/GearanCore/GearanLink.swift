@@ -150,8 +150,8 @@ public enum GearanLink {
 
     /// SAS: 6 digits from SHA256(transcript). Human anti-MITM only, never a key.
     public static func sas(transcript: Data) -> String {
-        let d = SHA256.hash(data: transcript)
-        let v = u32be(d[d.startIndex], d[d.startIndex + 1], d[d.startIndex + 2], d[d.startIndex + 3])
+        let bytes = Data(SHA256.hash(data: transcript))
+        let v = u32be(bytes[0], bytes[1], bytes[2], bytes[3])
         return String(format: "%06d", v % 1_000_000)
     }
 
