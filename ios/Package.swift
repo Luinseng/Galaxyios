@@ -9,6 +9,7 @@ let package = Package(
     ],
     targets: [
         .target(name: "GearanCore", path: "Sources/GearanCore"),
-        .testTarget(name: "GearanCoreTests", dependencies: ["GearanCore"], path: "Tests/GearanCoreTests"),
+        .testTarget(name: "GearanCoreTests", dependencies: ["GearanCore"], path: "Tests/GearanCoreTests",
+                    resources: [.copy("vectors")]),
     ]
 )

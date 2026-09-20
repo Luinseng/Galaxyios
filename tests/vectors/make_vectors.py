@@ -110,3 +110,14 @@ vectors["aes_gcm_nist_case2"] = {
 with open(os.path.join(HERE, "golden_vectors.json"), "w") as f:
     json.dump(vectors, f, indent=2)
 print(f"wrote golden_vectors.json ({len(vectors)} vector groups)")
+
+# Mirror into the SwiftPM test bundle (Bundle.module resource). The iOS
+# Xcode project does not use this copy. Keep both identical: this script is
+# the single writer.
+mirror = os.path.normpath(os.path.join(
+    HERE, "..", "..", "ios", "Tests", "GearanCoreTests", "vectors",
+    "golden_vectors.json"))
+os.makedirs(os.path.dirname(mirror), exist_ok=True)
+with open(mirror, "w") as f:
+    json.dump(vectors, f, indent=2)
+print(f"mirrored to {mirror}")

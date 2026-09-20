@@ -20,7 +20,15 @@ jobs:
       - name: List schemes (must include Gearan)
         run: xcodebuild -project Gearan.xcodeproj -list
       - name: SwiftPM core tests (logic + golden vectors)
-        run: swift test --parallel
+        run: |
+          set -o pipefail
+          swift test --parallel 2>&1 | tee swifttest.log
+      - name: Surface Swift test errors as annotations
+        if: failure()
+        run: |
+          [ -f swifttest.log ] || exit 0
+          grep -E "error:|error:L|failed" swifttest.log | head -n 25 | while IFS= read -r line; do echo "::error::$line"; done
+          exit 0
       - name: Build Gearan for iphoneos (no signing)
         run: |
           mkdir -p build
@@ -38,9 +46,11 @@ jobs:
       - name: Surface xcodebuild errors as annotations
         if: failure()
         run: |
+          [ -f build/xcodebuild.log ] || exit 0
           grep -E "error:|FAILED|failed" build/xcodebuild.log | head -n 25 | while IFS= read -r line; do echo "::error::$line"; done
           echo "--- tail ---"
           tail -n 30 build/xcodebuild.log
+          exit 0
       - name: Upload xcodebuild log
         if: always()
         uses: actions/upload-artifact@v4

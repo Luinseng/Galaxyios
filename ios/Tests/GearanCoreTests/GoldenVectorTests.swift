@@ -6,19 +6,14 @@ import CryptoKit
 /// Same file asserted by Python (test_vectors.py) and Kotlin (GoldenVectorTest).
 final class GoldenVectorTests: XCTestCase {
     func vectors() throws -> [String: Any] {
-        // SPM runs with cwd = package dir (ios/); vectors at ../tests/vectors.
-        let candidates = [
-            "../tests/vectors/golden_vectors.json",
-            "../../tests/vectors/golden_vectors.json",
-            "tests/vectors/golden_vectors.json",
-        ]
-        for c in candidates {
-            if let d = try? Data(contentsOf: URL(fileURLWithPath: c)),
-               let j = try? JSONSerialization.jsonObject(with: d) as? [String: Any] {
-                return j
-            }
+        // Deterministic: vectors ride with the test bundle (see vectors/ copy,
+        // synced from tests/vectors by tests/vectors/make_vectors.py).
+        guard let url = Bundle.module.url(forResource: "golden_vectors", withExtension: "json", subdirectory: "vectors"),
+              let d = try? Data(contentsOf: url),
+              let j = try? JSONSerialization.jsonObject(with: d) as? [String: Any] else {
+            throw NSError(domain: "vectors", code: 1, userInfo: [NSLocalizedDescriptionKey: "golden_vectors.json not found in test bundle"])
         }
-        throw NSError(domain: "vectors", code: 1, userInfo: [NSLocalizedDescriptionKey: "golden_vectors.json not found"])
+        return j
     }
 
     func hex(_ s: String) -> Data {
