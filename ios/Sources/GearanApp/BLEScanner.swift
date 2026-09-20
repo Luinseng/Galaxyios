@@ -1,5 +1,7 @@
 import Foundation
+import Combine
 import CoreBluetooth
+import GearanCore
 
 /// Scans ONLY for the Gearan Service UUID. Never shows headsets/speakers.
 /// Watch advertises as "Gearan Watch4C" + manufacturer blob GR|ver|id|caps.

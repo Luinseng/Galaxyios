@@ -102,7 +102,7 @@ class GearanPeripheralService : Service() {
             GearanBleHub.event("gatt: adapter off")
             return
         }
-        server = bt.adapter.bluetoothGattServer(this, callback)
+        server = bt.openGattServer(this, callback)
         if (server == null) {
             GearanLog.bleWarn("openGattServer returned null")
             GearanBleHub.event("gatt: open failed")

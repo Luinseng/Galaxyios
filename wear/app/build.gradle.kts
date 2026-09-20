@@ -1,7 +1,6 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.compose")
     id("org.jetbrains.kotlin.plugin.serialization")
 }
 
@@ -36,7 +35,13 @@ android {
         }
     }
     buildFeatures { compose = true }
-    composeOptions { kotlinCompilerExtensionVersion = "1.5.14" }
+    // Local JVM unit tests: android.util.Log etc. return defaults instead of
+    // throwing "not mocked" (GearanLog is called from pure logic under test).
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
+    // Kotlin 1.9.x era mechanism (compose compiler plugin is Kotlin 2.0+ only).
+    composeOptions { kotlinCompilerExtensionVersion = "1.5.15" }
     packaging { resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" } }
 }
 

@@ -1,5 +1,5 @@
 import Foundation
-import os.log
+import os
 
 /// Redacted diagnostic logging. Never logs keys, nonces, payloads, health or
 /// notification content. SAS appears only as MATCHED/MISMATCH.
