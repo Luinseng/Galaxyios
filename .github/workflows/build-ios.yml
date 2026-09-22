@@ -78,6 +78,51 @@ jobs:
           path: ios/Gearan-unsigned.ipa
           if-no-files-found: error
 
+  startup-smoke:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: ios
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build for iPhone Simulator
+        run: |
+          mkdir -p build
+          xcodebuild \
+            -project Gearan.xcodeproj \
+            -scheme Gearan \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination "generic/platform=iOS Simulator" \
+            -derivedDataPath build/simulator \
+            CODE_SIGNING_ALLOWED=NO \
+            build > build/simulator-build.log 2>&1 || {
+              tail -n 60 build/simulator-build.log
+              exit 1
+            }
+      - name: Launch and keep Gearan alive
+        run: |
+          SIMULATOR_ID=$(xcrun simctl list -j devices available | python3 -c 'import json,sys; data=json.load(sys.stdin); print(next(d["udid"] for group in data["devices"].values() for d in group if d["name"].startswith("iPhone") and d["isAvailable"]))')
+          xcrun simctl boot "$SIMULATOR_ID"
+          xcrun simctl bootstatus "$SIMULATOR_ID" -b
+          xcrun simctl install "$SIMULATOR_ID" build/simulator/Build/Products/Debug-iphonesimulator/Gearan.app
+          xcrun simctl launch "$SIMULATOR_ID" com.gearan.ios | tee build/simulator-launch.log
+          APP_PID=$(awk -F ': ' '/com.gearan.ios:/ {print $2}' build/simulator-launch.log)
+          test -n "$APP_PID"
+          sleep 5
+          xcrun simctl io "$SIMULATOR_ID" screenshot build/simulator-home.png
+          xcrun simctl spawn "$SIMULATOR_ID" /bin/ps -p "$APP_PID" -o comm= | grep -q Gearan
+      - name: Upload simulator evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Gearan-iOS-Startup-Smoke
+          path: |
+            ios/build/simulator-build.log
+            ios/build/simulator-launch.log
+            ios/build/simulator-home.png
+          if-no-files-found: warn
+
   # Optional lane: signed IPA. Runs ONLY when Apple signing secrets exist
   # (repo Settings → Secrets and variables → Actions). Nothing signing-related
   # is committed: no certificates, no profiles, no passwords.
