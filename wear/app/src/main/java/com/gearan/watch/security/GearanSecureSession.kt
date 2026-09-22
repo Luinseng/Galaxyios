@@ -1,28 +1,25 @@
 package com.gearan.watch.security
 
 import com.gearan.watch.util.GearanLog
-import java.security.KeyFactory
 import java.security.PublicKey
-import java.security.spec.X509EncodedKeySpec
+import javax.crypto.Mac
+import javax.crypto.spec.SecretKeySpec
 
-/**
- * Ephemeral handshake state machine (Watch side).
- * Transcript = ordered handshake bytes; SAS shown to user; session/app keys
- * derived only after mutual PAIR_CONFIRM. SAS is never a key.
- * ECDH group (X25519|P-256) negotiated via PAIR_HELLO and transcript-bound.
- */
+/** Watch-side handshake. Watch is protocol responder (`nonceW`). */
 class GearanSecureSession {
+    enum class Role { INITIATOR, RESPONDER }
+
+    val role = Role.RESPONDER
     var ephemeral: CryptoUtils.Ephemeral? = null
         private set
     var peerEphemeralPub: PublicKey? = null
         private set
-    var group: CryptoUtils.EcdhGroup = CryptoUtils.EcdhGroup.X25519
+    var group = CryptoUtils.EcdhGroup.X25519
         private set
-    var nonceLocal: ByteArray = CryptoUtils.randomBytes(16)
+    var nonceLocal = CryptoUtils.randomBytes(16)
         private set
     var noncePeer: ByteArray? = null
         private set
-    private val transcriptSink = mutableListOf<ByteArray>()
     var sessionKey: ByteArray? = null
         private set
     var encKey: ByteArray? = null
@@ -31,64 +28,72 @@ class GearanSecureSession {
         private set
     var sasCode: String? = null
         private set
+    private val transcriptSink = mutableListOf<ByteArray>()
 
     fun beginHandshake() {
         ephemeral = CryptoUtils.generateEphemeral()
-        group = ephemeral!!.group
+        group = requireNotNull(ephemeral).group
         nonceLocal = CryptoUtils.randomBytes(16)
-        transcriptSink.clear()
-        GearanLog.crypto("handshake begin (group=$group)")
-    }
-
-    /** Our ephemeral public bytes for PAIR_EPHEMERAL. */
-    fun localPublicBytes(): ByteArray = requireNotNull(ephemeral).keyPair.public.encoded
-
-    fun recordTranscript(vararg parts: ByteArray) {
-        transcriptSink.addAll(parts.toList())
-    }
-
-    fun transcript(): ByteArray = transcriptSink.fold(ByteArray(0)) { a, b -> a + b }
-
-    fun onPeerEphemeral(rawPub: ByteArray, peerNonce: ByteArray, peerGroup: CryptoUtils.EcdhGroup) {
-        if (peerGroup != group) {
-            // Transcript-bound: mismatch aborts pairing (downgrade visible, not silent).
-            throw IllegalStateException("ECDH group mismatch local=$group peer=$peerGroup")
-        }
-        val kf = KeyFactory.getInstance(if (peerGroup == CryptoUtils.EcdhGroup.X25519) "XDH" else "EC")
-        peerEphemeralPub = kf.generatePublic(X509EncodedKeySpec(rawPub))
-        noncePeer = peerNonce
-    }
-
-    /** Call after both ephemeral pubs + nonces are known. Returns SAS for display. */
-    fun deriveSession(): String {
-        val eph = requireNotNull(ephemeral)
-        val peer = requireNotNull(peerEphemeralPub)
-        val shared = CryptoUtils.ecdhShared(eph.keyPair.private, peer, group)
-        val key = CryptoUtils.sessionKey(shared, noncePeer ?: nonceLocal, nonceLocal)
-        sessionKey = key
-        sasCode = CryptoUtils.sasFromTranscript(CryptoUtils.sha256(transcript()))
-        val (enc, mac) = CryptoUtils.appKeys(key)
-        encKey = enc
-        macKey = mac
-        // Log MATCHED-eligible event only; never the code or key material.
-        GearanLog.crypto("session derived (group=$group), SAS ready for display")
-        return sasCode!!
-    }
-
-    fun commitWord(role: String): ByteArray {
-        val sk = requireNotNull(sessionKey)
-        val mac = javax.crypto.Mac.getInstance("HmacSHA256")
-        mac.init(javax.crypto.spec.SecretKeySpec(sk, "HmacSHA256"))
-        return mac.doFinal(("commit" + role).toByteArray() + CryptoUtils.sha256(transcript()))
-    }
-
-    fun reset() {
-        ephemeral = null
         peerEphemeralPub = null
+        noncePeer = null
         sessionKey = null
         encKey = null
         macKey = null
         sasCode = null
         transcriptSink.clear()
+        GearanLog.crypto("handshake begin (group=$group)")
+    }
+
+    /** Canonical 32-byte X25519 or 65-byte uncompressed X9.63 P-256. */
+    fun localPublicBytes(): ByteArray {
+        val local = requireNotNull(ephemeral) { "handshake not started" }
+        return CryptoUtils.publicKeyToWire(local.keyPair.public, local.group)
+    }
+
+    fun recordTranscript(vararg parts: ByteArray) { transcriptSink.addAll(parts) }
+    fun transcript(): ByteArray = transcriptSink.fold(ByteArray(0)) { all, part -> all + part }
+
+    fun onPeerEphemeral(wirePublicKey: ByteArray, peerNonce: ByteArray, peerGroup: CryptoUtils.EcdhGroup) {
+        check(peerGroup == group) { "ECDH group mismatch local=$group peer=$peerGroup" }
+        require(peerNonce.size == 16) { "pairing nonce must be exactly 16 bytes" }
+        peerEphemeralPub = CryptoUtils.publicKeyFromWire(wirePublicKey, peerGroup)
+        noncePeer = peerNonce.copyOf()
+    }
+
+    fun deriveSession(): String {
+        val local = requireNotNull(ephemeral) { "handshake not started" }
+        val peer = requireNotNull(peerEphemeralPub) { "peer public key missing" }
+        val peerNonce = requireNotNull(noncePeer) { "peer nonce missing" }
+        val shared = CryptoUtils.ecdhShared(local.keyPair.private, peer, group)
+        val (nonceI, nonceW) = orderedNonces(role, nonceLocal, peerNonce)
+        val key = CryptoUtils.sessionKey(shared, nonceI, nonceW)
+        sessionKey = key
+        sasCode = CryptoUtils.sasFromTranscript(CryptoUtils.sha256(transcript()))
+        CryptoUtils.appKeys(key).also { (enc, mac) -> encKey = enc; macKey = mac }
+        GearanLog.crypto("session derived (group=$group), SAS ready for display")
+        return requireNotNull(sasCode)
+    }
+
+    fun commitWord(roleLabel: String): ByteArray {
+        val key = requireNotNull(sessionKey) { "session key not derived" }
+        val mac = Mac.getInstance("HmacSHA256")
+        mac.init(SecretKeySpec(key, "HmacSHA256"))
+        return mac.doFinal(("commit" + roleLabel).toByteArray() + CryptoUtils.sha256(transcript()))
+    }
+
+    fun reset() {
+        ephemeral = null
+        peerEphemeralPub = null
+        noncePeer = null
+        sessionKey = null
+        encKey = null
+        macKey = null
+        sasCode = null
+        transcriptSink.clear()
+    }
+
+    internal fun orderedNonces(role: Role, local: ByteArray, peer: ByteArray) = when (role) {
+        Role.INITIATOR -> local to peer
+        Role.RESPONDER -> peer to local
     }
 }

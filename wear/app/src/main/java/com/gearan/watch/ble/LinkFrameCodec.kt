@@ -19,6 +19,7 @@ object LinkFrameCodec {
     const val AUTH_LEN = 32
     const val MAX_FRAME_PAYLOAD = 512
     const val MAX_MESSAGE_BYTES = 64 * 1024
+    const val MAX_TOTAL_CHUNKS = (MAX_MESSAGE_BYTES + MAX_FRAME_PAYLOAD - 1) / MAX_FRAME_PAYLOAD
 
     const val FLAG_ACK_REQ: Int = 0x0001
     const val FLAG_ACK: Int = 0x0002
@@ -77,7 +78,9 @@ object LinkFrameCodec {
 
     fun encode(f: Frame, authKey: ByteArray): ByteArray {
         require(f.payload.size <= MAX_FRAME_PAYLOAD) { "payload too large" }
-        require(f.totalChunks >= 1) { "totalChunks >= 1" }
+        require(f.totalChunks in 1..MAX_TOTAL_CHUNKS && f.chunkIndex in 0 until f.totalChunks) {
+            "bad chunk indices"
+        }
         val header = ByteBuffer.allocate(HEADER_LEN).order(ByteOrder.BIG_ENDIAN)
         header.put(MAGIC_0).put(MAGIC_1).put(VERSION).put(f.messageType.toByte())
         header.putShort(f.flags.toShort())
@@ -106,9 +109,13 @@ object LinkFrameCodec {
         val cidx = bb.short.toInt() and 0xFFFF
         val total = bb.short.toInt() and 0xFFFF
         val plen = bb.short.toInt() and 0xFFFF
-        if (total == 0 || cidx >= total) throw CodecException("bad chunk indices")
+        if (total == 0 || total > MAX_TOTAL_CHUNKS || cidx >= total) {
+            throw CodecException("bad chunk indices")
+        }
         if (plen > MAX_FRAME_PAYLOAD) throw CodecException("payload too large")
-        if (data.size < HEADER_LEN + plen + AUTH_LEN) throw CodecException("truncated frame")
+        val expectedLength = HEADER_LEN + plen + AUTH_LEN
+        if (data.size < expectedLength) throw CodecException("truncated frame")
+        if (data.size != expectedLength) throw CodecException("trailing frame data")
         val payload = data.copyOfRange(HEADER_LEN, HEADER_LEN + plen)
         val auth = data.copyOfRange(HEADER_LEN + plen, HEADER_LEN + plen + AUTH_LEN)
         val expected = hmacSha256(authKey, header, payload)
@@ -147,23 +154,45 @@ object LinkFrameCodec {
     }
 
     class Reassembler(private val timeoutMs: Long = 10_000, private val maxConcurrent: Int = 8) {
-        private data class Entry(var total: Int, val chunks: MutableMap<Int, ByteArray>, var ts: Long)
+        private data class Entry(
+            val total: Int,
+            val chunks: MutableMap<Int, ByteArray>,
+            var byteCount: Int,
+            var ts: Long
+        )
         private val buffers = HashMap<Pair<Int, Int>, Entry>()
 
         @Synchronized
         fun feed(f: Frame): ByteArray? {
             val now = System.currentTimeMillis()
             buffers.entries.removeIf { now - it.value.ts > timeoutMs }
-            if (f.totalChunks == 1) return f.payload
             val key = f.requestId to f.messageType
+            if (f.totalChunks !in 1..MAX_TOTAL_CHUNKS ||
+                f.chunkIndex !in 0 until f.totalChunks ||
+                f.payload.size > MAX_FRAME_PAYLOAD
+            ) {
+                buffers.remove(key)
+                throw CodecException("invalid chunk metadata")
+            }
+            if (f.totalChunks == 1) return f.payload
             var e = buffers[key]
             if (e == null) {
                 require(buffers.size < maxConcurrent) { "too many concurrent messages" }
-                e = Entry(f.totalChunks, HashMap(), now)
+                e = Entry(f.totalChunks, HashMap(), 0, now)
                 buffers[key] = e
             }
-            require(e.total == f.totalChunks) { "totalChunks mismatch" }
-            e.chunks[f.chunkIndex] = f.payload
+            if (e.total != f.totalChunks) {
+                buffers.remove(key)
+                throw CodecException("totalChunks mismatch")
+            }
+            val previousSize = e.chunks[f.chunkIndex]?.size ?: 0
+            val newByteCount = e.byteCount - previousSize + f.payload.size
+            if (newByteCount > MAX_MESSAGE_BYTES) {
+                buffers.remove(key)
+                throw CodecException("reassembled message too large")
+            }
+            e.chunks[f.chunkIndex] = f.payload.copyOf()
+            e.byteCount = newByteCount
             e.ts = now
             if (e.chunks.size == e.total) {
                 val out = (0 until e.total).map { e.chunks[it]!! }.fold(ByteArray(0)) { a, b -> a + b }

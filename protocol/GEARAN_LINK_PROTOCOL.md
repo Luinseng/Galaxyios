@@ -132,6 +132,10 @@ samples use CBOR-shaped JSON arrays for v0.1 simplicity (documented per capabili
 Primitives ONLY: X25519 (ephemeral), HKDF-SHA256, AES-GCM-128/256,
 HMAC-SHA256, CSPRNG nonces (16 B), SAS = 6 decimal digits.
 
+Ephemeral public keys use canonical wire encodings. X25519 is the raw 32-byte
+RFC 7748 u-coordinate, never DER/X.509/SPKI. P-256 uses the 65-byte
+uncompressed X9.63 form `0x04 || X || Y`.
+
 ```
 iPhone                          Watch
   |--- PAIR_HELLO(iPhoneHello) --->|  {gearDeviceId, model:"iPhone", proto:1,
@@ -161,11 +165,12 @@ iPhone                          Watch
 
 ## 4.1 ECDH agility (amendment 2026-09-20, hardening)
 
-Ephemeral group is X25519 preferred with ECDH P-256 fallback (both modern,
-standard, CryptoKit-interoperable). `PAIR_HELLO` carries `ecdh:"x25519"|"p256"`;
-both sides MUST use the same group and the value is covered by the transcript —
-a mismatch aborts pairing (downgrade is visible, never silent). HKDF-SHA256,
-SAS and commit-word binding are identical for both groups. No custom crypto.
+X25519 is preferred. P-256 is optional only when both peers advertise it;
+current iOS builds advertise only `x25519`. `PAIR_HELLO` carries
+`ecdh:"x25519"|"p256"`, covered by the transcript. A group mismatch aborts
+pairing (downgrade visible, never silent). KDF input is always
+`shared || nonceI || nonceW`, independent of which peer computes it.
+HKDF-SHA256, SAS, and commit-word binding are identical for both groups.
 
 ## 5. Trusted device record
 

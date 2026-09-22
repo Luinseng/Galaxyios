@@ -1,37 +1,13 @@
-# Gearan STATUS
+# Gearan status — 2026-09-23
 
-Data: 2026-09-20 · Target primario: Samsung Galaxy Watch4 Classic · Protocol: Gearan Link 0.1 (+ECDH agility §4.1)
+Target: Samsung Galaxy Watch4 Classic + iPhone over Gearan BLE. System provisioning still requires the official Samsung/Google path.
 
-## Build status
-| Modulo | Sorgenti | Verifica locale (Windows, senza SDK) | Verifica su hardware |
-|---|---|---|---|
-| protocol + shared python | completi, emendamento ECDH agility | PASS (pytest 23/23, vedi sotto) | n/a |
-| wear (Kotlin/Wear OS) | hardening completato (audit W-01…W-15) | Gradle wrapper presente+valido; build da fare su Android Studio | NOT RUN |
-| ios (Swift/SwiftUI) | hardening completato (audit I-01…I-08) | build da fare su Xcode | NOT RUN |
-| android (debug tool) | `gearan_doctor.py` invariato | ok (ADB assente qui) | opzionale |
-| tests python | 23 test PASS | PASS | n/a |
-| tests nativi (Kotlin/Swift) | 4 file (codec, state machine, golden vectors) | da eseguire su Android Studio / Xcode | NOT RUN |
+| Area | Current evidence | Remaining work |
+|---|---|---|
+| Wear OS | Release APK built and installed on SM-R870; 18 unit tests pass. On-device BLE advertising, GATT service, P-256 crypto self-test, 120 s timeout and retry pass. | Complete the connection and frame dispatch into the pairing manager. |
+| iOS | Swift package and Xcode project are present. GitHub Actions has an unsigned IPA lane and an optional signed IPA lane. | Run `swift test` and Xcode Release build on macOS; test with a physical iPhone. Signed IPA requires Apple signing assets. |
+| Shared protocol | 5 pytest tests and 23 direct Python checks pass. | Verify real Watch-to-iPhone handshake and sync. |
 
-## Test status (locale, eseguiti 2026-09-20)
-- `tests/test_gearan_link.py` — 9/9 PASS
-- `tests/test_pairing_crypto.py` — 6/6 PASS
-- `tests/test_vectors.py` — 8/8 PASS (frame/HMAC/HKDF/SAS/chunking/AES-GCM-formato)
-- Kotlin `LinkFrameCodecTest`, `PairingStateMachineTest`, `GoldenVectorTest` — NOT RUN (serve Android SDK)
-- Swift `GearanCoreTests`, `GoldenVectorTests` — NOT RUN (serve Xcode/macOS)
+Watch evidence and APK checksum: [`artifacts/watch-ui/TEST_REPORT.md`](artifacts/watch-ui/TEST_REPORT.md).
 
-## Milestone hardware
-MILESTONE 1 (GATT base) … MILESTONE 9 (notifiche): tutti NOT RUN, checklist in
-`docs/HARDWARE_TEST_WATCH4_CLASSIC.md`. Niente marcato PASS senza esecuzione reale.
-
-## Daily-driver delta (questo pass, solo repo esistente)
-Boot recovery Watch, idempotenza advertiser/GATT, SyncEngine incrementale
-doppia piattaforma + test, AutoReconnect iOS reale a 6 stati, Home entrambe
-con stati/batteria, Developer Mode iOS, Stock-probe message, doc IPA/APK/pairing.
-
-## Funzionalità operative (dopo build + pairing reale)
-Invariate rispetto a v0.1, più: permission gate, BLE smoke test, crypto self-test,
-golden vectors, staged errors, logging GEARAN_*, ECDH fallback P-256 documentato.
-
-## Funzionalità sperimentali / limitazioni
-Invariate: ANCS EXPERIMENTAL; ECG/BIA/SpO2 SDK-gated; provisioning di sistema
-sempre via Android (vedi `docs/WATCH4_CLASSIC_SETUP.md`).
+The apps do **not** yet pair end to end. `GearanBleHub.onConnected` and `onRx` are not routed to the Watch handshake dispatcher. The tested Watch selects P-256 while the current iOS secure session implements X25519 only. No iPhone SAS, trust, or sync success is claimed.

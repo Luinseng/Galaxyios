@@ -17,6 +17,7 @@ VERSION = 0x01
 HEADER_LEN = 20
 MAX_FRAME_PAYLOAD = 512
 MAX_MESSAGE_BYTES = 64 * 1024
+MAX_TOTAL_CHUNKS = (MAX_MESSAGE_BYTES + MAX_FRAME_PAYLOAD - 1) // MAX_FRAME_PAYLOAD
 AUTH_LEN = 32
 
 # flags
@@ -73,8 +74,9 @@ def compute_auth(header: bytes, payload: bytes, key: bytes) -> bytes:
 def encode_frame(frame: Frame, auth_key: bytes) -> bytes:
     if len(frame.payload) > MAX_FRAME_PAYLOAD:
         raise ValueError("payload exceeds MAX_FRAME_PAYLOAD")
-    if frame.total_chunks == 0:
-        raise ValueError("totalChunks must be >= 1")
+    if (frame.total_chunks < 1 or frame.total_chunks > MAX_TOTAL_CHUNKS
+            or frame.chunk_index < 0 or frame.chunk_index >= frame.total_chunks):
+        raise ValueError("bad chunk indices")
     header = HEADER_STRUCT.pack(
         MAGIC, VERSION, frame.message_type & 0xFF, frame.flags & 0xFFFF,
         frame.request_id & 0xFFFFFFFF, frame.sequence & 0xFFFFFFFF,
@@ -94,12 +96,15 @@ def decode_frame(data: bytes, auth_key: bytes) -> Frame:
         raise ValueError("bad magic")
     if ver != VERSION:
         raise ValueError(f"unsupported version {ver}")
-    if total == 0 or cidx >= total:
+    if total == 0 or total > MAX_TOTAL_CHUNKS or cidx >= total:
         raise ValueError("bad chunk indices")
     if plen > MAX_FRAME_PAYLOAD:
         raise ValueError("payload length exceeds max")
-    if len(data) < HEADER_LEN + plen + AUTH_LEN:
+    expected_length = HEADER_LEN + plen + AUTH_LEN
+    if len(data) < expected_length:
         raise ValueError("truncated frame")
+    if len(data) != expected_length:
+        raise ValueError("trailing frame data")
     payload = data[HEADER_LEN:HEADER_LEN + plen]
     auth = data[HEADER_LEN + plen:HEADER_LEN + plen + AUTH_LEN]
     expected = compute_auth(header, payload, auth_key)
@@ -135,17 +140,30 @@ class Reassembler:
         # expire old
         for k in [k for k, v in self.buffers.items() if now - v["ts"] > self.timeout_s]:
             del self.buffers[k]
+        if (frame.total_chunks < 1 or frame.total_chunks > MAX_TOTAL_CHUNKS
+                or frame.chunk_index < 0 or frame.chunk_index >= frame.total_chunks
+                or len(frame.payload) > MAX_FRAME_PAYLOAD):
+            self.buffers.pop(key, None)
+            raise ValueError("invalid chunk metadata")
         if frame.total_chunks == 1:
             return bytes(frame.payload)
         entry = self.buffers.get(key)
         if entry is None:
             if len(self.buffers) >= self.max_concurrent:
                 raise ValueError("too many concurrent fragmented messages")
-            entry = {"total": frame.total_chunks, "chunks": {}, "ts": now}
+            entry = {"total": frame.total_chunks, "chunks": {}, "bytes": 0, "ts": now}
             self.buffers[key] = entry
         if entry["total"] != frame.total_chunks:
+            del self.buffers[key]
             raise ValueError("totalChunks mismatch")
-        entry["chunks"][frame.chunk_index] = bytes(frame.payload)
+        payload = bytes(frame.payload)
+        previous = entry["chunks"].get(frame.chunk_index)
+        new_size = entry["bytes"] - (len(previous) if previous is not None else 0) + len(payload)
+        if new_size > MAX_MESSAGE_BYTES:
+            del self.buffers[key]
+            raise ValueError("reassembled message too large")
+        entry["chunks"][frame.chunk_index] = payload
+        entry["bytes"] = new_size
         entry["ts"] = now
         if len(entry["chunks"]) == entry["total"]:
             data = b"".join(entry["chunks"][i] for i in range(entry["total"]))

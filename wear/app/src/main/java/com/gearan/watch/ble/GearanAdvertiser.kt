@@ -7,6 +7,8 @@ import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
 import android.bluetooth.le.BluetoothLeAdvertiser
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.os.ParcelUuid
 import com.gearan.watch.util.GearanLog
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,10 +20,16 @@ import kotlinx.coroutines.flow.StateFlow
  * Round-robin between low-latency (pairing) and low-power (reconnect) modes
  * to protect Watch4 Classic battery. State mirrored to [GearanBleHub].
  */
-class GearanAdvertiser(private val context: Context) {
+class GearanAdvertiser private constructor(private val context: Context) {
     private val _advertising = MutableStateFlow(false)
     val advertising: StateFlow<Boolean> = _advertising
     private var advertiser: BluetoothLeAdvertiser? = null
+    private val handler = Handler(Looper.getMainLooper())
+    private val pairingExpired = Runnable {
+        GearanLog.ble("pairing advertising window ended")
+        stop()
+        GearanBleHub.event("adv: pairing window ended")
+    }
 
     private val callback = object : AdvertiseCallback() {
         override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
@@ -29,12 +37,17 @@ class GearanAdvertiser(private val context: Context) {
             GearanBleHub.event("adv: started")
             _advertising.value = true
             GearanBleHub.setAdvertising(true)
+            handler.removeCallbacks(pairingExpired)
+            if (settingsInEffect.timeout > 0) {
+                handler.postDelayed(pairingExpired, settingsInEffect.timeout.toLong())
+            }
         }
         override fun onStartFailure(errorCode: Int) {
             GearanLog.bleWarn("advertise failed code=$errorCode (${advErrorName(errorCode)})")
             GearanBleHub.event("adv: FAILED code=$errorCode")
             _advertising.value = false
             GearanBleHub.setAdvertising(false)
+            handler.removeCallbacks(pairingExpired)
         }
     }
 
@@ -60,10 +73,9 @@ class GearanAdvertiser(private val context: Context) {
 
     @SuppressLint("MissingPermission")
     fun startPairingMode(deviceShortId: ByteArray, capsMask: Int) {
-        if (_advertising.value) {
-            GearanLog.ble("pairing advertise already running, ignoring duplicate start")
-            GearanBleHub.event("adv: already running")
-            return
+        if (advertiser != null) {
+            // Release the old callback before retrying, including after a timed window.
+            stop()
         }
         val adv = resolveAdvertiser() ?: return
         try {
@@ -73,7 +85,7 @@ class GearanAdvertiser(private val context: Context) {
                 .setConnectable(true)
                 .setTimeout(120_000) // ms; matches 120 s pairing window (max 180000 ms)
                 .build()
-            adv.startAdvertising(settings, buildData(deviceShortId, capsMask), callback)
+            adv.startAdvertising(settings, buildData(), buildScanResponse(deviceShortId, capsMask), callback)
             GearanLog.ble("pairing advertise requested uuid=${GearanUuids.SERVICE}")
         } catch (e: SecurityException) {
             GearanLog.bleWarn("pairing advertise denied (permissions?)", e)
@@ -95,7 +107,7 @@ class GearanAdvertiser(private val context: Context) {
                 .setConnectable(true)
                 .setTimeout(0)
                 .build()
-            adv.startAdvertising(settings, buildData(deviceShortId, capsMask), callback)
+            adv.startAdvertising(settings, buildData(), buildScanResponse(deviceShortId, capsMask), callback)
             GearanLog.ble("reconnect advertise requested (low power)")
         } catch (e: SecurityException) {
             GearanLog.bleWarn("reconnect advertise denied (permissions?)", e)
@@ -105,6 +117,7 @@ class GearanAdvertiser(private val context: Context) {
 
     @SuppressLint("MissingPermission")
     fun stop() {
+        handler.removeCallbacks(pairingExpired)
         try { advertiser?.stopAdvertising(callback) } catch (e: Exception) {
             GearanLog.bleWarn("advertise stop failed", e)
         }
@@ -113,7 +126,12 @@ class GearanAdvertiser(private val context: Context) {
         GearanBleHub.event("adv: stopped")
     }
 
-    private fun buildData(shortId: ByteArray, capsMask: Int): AdvertiseData {
+    private fun buildData(): AdvertiseData = AdvertiseData.Builder()
+        .setIncludeDeviceName(false)
+        .addServiceUuid(ParcelUuid(GearanUuids.SERVICE))
+        .build()
+
+    private fun buildScanResponse(shortId: ByteArray, capsMask: Int): AdvertiseData {
         val mfg = ByteArray(2 + 1 + 8 + 2)
         mfg[0] = 0x47; mfg[1] = 0x52 // "GR"
         mfg[2] = 0x01
@@ -122,12 +140,17 @@ class GearanAdvertiser(private val context: Context) {
         mfg[12] = (capsMask and 0xFF).toByte()
         return AdvertiseData.Builder()
             .setIncludeDeviceName(false)
-            .addServiceUuid(ParcelUuid(GearanUuids.SERVICE))
             .addManufacturerData(0xFFFF, mfg)
             .build()
     }
 
     companion object {
+        private var instance: GearanAdvertiser? = null
+
+        @Synchronized
+        fun get(context: Context): GearanAdvertiser = instance
+            ?: GearanAdvertiser(context.applicationContext).also { instance = it }
+
         fun advErrorName(code: Int): String = when (code) {
             AdvertiseCallback.ADVERTISE_FAILED_ALREADY_STARTED -> "ALREADY_STARTED"
             AdvertiseCallback.ADVERTISE_FAILED_DATA_TOO_LARGE -> "DATA_TOO_LARGE"

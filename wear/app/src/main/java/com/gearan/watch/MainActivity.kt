@@ -18,7 +18,6 @@ import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import com.gearan.watch.ble.BlePermissions
 import com.gearan.watch.ble.GearanAdvertiser
-import com.gearan.watch.ble.GearanBleHub
 import com.gearan.watch.ble.GearanPeripheralService
 import com.gearan.watch.pairing.GearanPairingManager
 import com.gearan.watch.pairing.PairingState
@@ -32,14 +31,13 @@ import com.gearan.watch.ui.screens.DeveloperMenuScreen
 import com.gearan.watch.ui.screens.HomeScreen
 import com.gearan.watch.ui.screens.PairingScreen
 import com.gearan.watch.ui.screens.PermissionGate
-import com.gearan.watch.ui.screens.SimpleScreen
 import com.gearan.watch.ui.theme.GearanTheme
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val advertiser = GearanAdvertiser(this)
+        val advertiser = GearanAdvertiser.get(applicationContext)
         setContent {
             GearanTheme {
                 val scope = rememberCoroutineScope()
@@ -51,7 +49,6 @@ class MainActivity : ComponentActivity() {
                 val battery by batteryMonitor.battery.collectAsState()
                 var missing by remember { mutableStateOf(BlePermissions.missing(this)) }
                 var cryptoResult by remember { mutableStateOf<String?>(null) }
-                var detail by remember { mutableStateOf("sync") }
                 val nav = rememberSwipeDismissableNavController()
                 val launcher = rememberLauncherForActivityResult(
                     ActivityResultContracts.RequestMultiplePermissions()
@@ -71,7 +68,6 @@ class MainActivity : ComponentActivity() {
 
                 SwipeDismissableNavHost(navController = nav, startDestination = "home") {
                     composable("home") {
-                        val connected = state == PairingState.CONNECTED || state == PairingState.PAIRED
                         when {
                             state == PairingState.WAITING_FOR_USER_CONFIRMATION -> PairingScreen(
                                 sas = sas,
@@ -81,7 +77,7 @@ class MainActivity : ComponentActivity() {
                             )
                             else -> HomeScreen(
                                 pairingState = state,
-                                connected = connected,
+                                advertising = advertising,
                                 batteryText = if (battery.percent >= 0) {
                                     "Battery: ${battery.percent}%${if (battery.charging) " (charging)" else ""}"
                                 } else null,
@@ -96,12 +92,7 @@ class MainActivity : ComponentActivity() {
                                     }
                                     startForegroundService(Intent(this@MainActivity, GearanPeripheralService::class.java))
                                 },
-                                onOpen = { target ->
-                                    if (target == "developer") nav.navigate("developer") else {
-                                        detail = target
-                                        nav.navigate("detail")
-                                    }
-                                }
+                                onDeveloper = { nav.navigate("developer") }
                             )
                         }
                     }
@@ -136,40 +127,11 @@ class MainActivity : ComponentActivity() {
                             onRun = {
                                 scope.launch {
                                     val r = CryptoSelfTest.run()
-                                    cryptoResult = if (r.pass) "Crypto self-test:\nPASS\n${r.detail}" else r.detail
+                                    cryptoResult = if (r.passed) "Crypto self-test:\nPASS\n${r.detail}" else r.detail
                                 }
                             },
                             onBack = { nav.popBackStack() }
                         )
-                    }
-                    composable("detail") {
-                        when (detail) {
-                            "internet" -> SimpleScreen(
-                                "Internet via iPhone",
-                                listOf("Relay: HTTPS-only", "[Test connection]"),
-                                onBack = { nav.popBackStack() }
-                            )
-                            "health" -> SimpleScreen(
-                                "Health",
-                                listOf("HR: gated by permission", "SpO2/BIA/ECG: SDK-gated"),
-                                onBack = { nav.popBackStack() }
-                            )
-                            "settings" -> SimpleScreen(
-                                "Settings",
-                                listOf("Forget iPhone", "Diagnostics"),
-                                onBack = { nav.popBackStack() }
-                            )
-                            "log" -> SimpleScreen(
-                                "Events",
-                                GearanBleHub.eventLog.collectAsState().value.takeLast(5).ifEmpty { listOf("idle") },
-                                onBack = { nav.popBackStack() }
-                            )
-                            else -> SimpleScreen(
-                                detail.replaceFirstChar { it.uppercase() },
-                                listOf("state=$state"),
-                                onBack = { nav.popBackStack() }
-                            )
-                        }
                     }
                 }
             }

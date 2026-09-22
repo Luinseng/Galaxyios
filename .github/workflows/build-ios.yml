@@ -98,9 +98,11 @@ jobs:
         name: Check Apple signing secrets
         env:
           CERT_B64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          CERT_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           PROFILE_B64: ${{ secrets.APPLE_PROVISIONING_PROFILE_BASE64 }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          if [ -n "$CERT_B64" ] && [ -n "$PROFILE_B64" ]; then
+          if [ -n "$CERT_B64" ] && [ -n "$CERT_PASSWORD" ] && [ -n "$PROFILE_B64" ] && [ -n "$APPLE_TEAM_ID" ]; then
             echo "do_sign=true" >> "$GITHUB_OUTPUT"
           else
             echo "do_sign=false" >> "$GITHUB_OUTPUT"

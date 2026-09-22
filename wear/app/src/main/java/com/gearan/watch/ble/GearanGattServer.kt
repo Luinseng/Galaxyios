@@ -23,10 +23,9 @@ import kotlinx.coroutines.launch
 
 /**
  * Foreground GATT server: RX (write), TX (notify), CTRL (read/write).
- * Sensitive characteristics use PERMISSION_READ_ENCRYPTED/WRITE_ENCRYPTED so
- * the OS may trigger bonding; Gearan's own trusted relationship stays
- * independent of that bond. All Gearan Link frames are authenticated; ENC
- * payloads are AES-GCM after handshake.
+ * Bootstrap RX writes and the public CTRL device-info read do not require OS
+ * bonding, so iOS can reach Gearan's own handshake. Protected frames must be
+ * authenticated by Gearan Link; ENC payloads use AES-GCM after handshake.
  *
  * State is published to [GearanBleHub] so the UI smoke test can show
  * Advertising / GATT Server / Connections without service binding.
@@ -112,7 +111,7 @@ class GearanPeripheralService : Service() {
         val rx = BluetoothGattCharacteristic(
             GearanUuids.RX,
             BluetoothGattCharacteristic.PROPERTY_WRITE or BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE,
-            BluetoothGattCharacteristic.PERMISSION_WRITE_ENCRYPTED
+            BluetoothGattCharacteristic.PERMISSION_WRITE
         )
         txChar = BluetoothGattCharacteristic(
             GearanUuids.TX,
@@ -128,7 +127,7 @@ class GearanPeripheralService : Service() {
         val ctrl = BluetoothGattCharacteristic(
             GearanUuids.CTRL,
             BluetoothGattCharacteristic.PROPERTY_READ or BluetoothGattCharacteristic.PROPERTY_WRITE,
-            BluetoothGattCharacteristic.PERMISSION_READ_ENCRYPTED or BluetoothGattCharacteristic.PERMISSION_WRITE_ENCRYPTED
+            BluetoothGattCharacteristic.PERMISSION_READ or BluetoothGattCharacteristic.PERMISSION_WRITE_ENCRYPTED
         )
         service.addCharacteristic(rx)
         service.addCharacteristic(txChar)

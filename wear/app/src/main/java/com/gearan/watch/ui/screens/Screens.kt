@@ -1,80 +1,116 @@
 package com.gearan.watch.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.material.Button
+import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
+import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.Text
 import com.gearan.watch.pairing.PairingState
 
-/** Round-screen home: big title, connection line, single Pair action. */
+private val RoundScreenPadding = PaddingValues(horizontal = 18.dp, vertical = 26.dp)
+
+/** Home state is derived from pairing state, never inferred from a stale UI flag. */
 @Composable
 fun HomeScreen(
     pairingState: PairingState,
-    connected: Boolean,
+    advertising: Boolean,
     batteryText: String? = null,
-    syncText: String? = null,
     onPair: () -> Unit,
-    onOpen: (String) -> Unit,
+    onDeveloper: () -> Unit,
 ) {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+    val status = when (pairingState) {
+        PairingState.CONNECTED -> "Connected to iPhone"
+        PairingState.PAIRED -> "Paired; iPhone not connected"
+        PairingState.SCANNING -> if (advertising) {
+            "Pairing: advertising to iPhone"
+        } else {
+            "Pairing: starting BLE advertising"
+        }
+        PairingState.WATCH_FOUND -> "Pairing: iPhone found"
+        PairingState.CONNECTING -> "Pairing: connecting"
+        PairingState.HANDSHAKING -> "Pairing: verifying secure link"
+        PairingState.WAITING_FOR_USER_CONFIRMATION -> "Pairing: confirm code"
+        PairingState.SECURING_CONNECTION -> "Pairing: securing link"
+        PairingState.SAVING_TRUSTED_DEVICE -> "Pairing: saving device"
+        PairingState.INITIAL_SYNC -> "Pairing: initial sync"
+        PairingState.RECONNECTING -> "Paired; reconnecting"
+        PairingState.DISCONNECTED -> "Disconnected"
+        PairingState.FAILED -> "Pairing failed; try again"
+        PairingState.IDLE -> if (advertising) "Watch visible to iPhone" else "Ready to pair"
+    }
+    val canPair = pairingState == PairingState.IDLE ||
+        pairingState == PairingState.DISCONNECTED || pairingState == PairingState.FAILED
+
+    ScalingLazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = RoundScreenPadding,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("Gearan", textAlign = TextAlign.Center)
-        Text(
-            if (connected) "iPhone\nConnected" else "Connect to iPhone",
-            textAlign = TextAlign.Center
-        )
-        if (connected) {
-            if (batteryText != null) Text(batteryText, textAlign = TextAlign.Center)
-            if (syncText != null) Text(syncText, textAlign = TextAlign.Center)
+        item { Text("Gearan", textAlign = TextAlign.Center) }
+        item { Text(status, textAlign = TextAlign.Center) }
+        if (pairingState == PairingState.CONNECTED) {
+            batteryText?.let { battery -> item { Text(battery, textAlign = TextAlign.Center) } }
         }
-        if (!connected && pairingState == PairingState.IDLE) {
-            Button(onClick = onPair) { Text("Pair iPhone") }
+        if (canPair) {
+            item {
+                Chip(
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(if (advertising) "Restart visibility" else "Make watch visible") },
+                    onClick = onPair,
+                )
+            }
+            item { Text("Open Gearan on iPhone to find this watch", textAlign = TextAlign.Center) }
         }
-        if (connected) {
-            Button(onClick = { onOpen("sync") }) { Text("Sync") }
-            Button(onClick = { onOpen("internet") }) { Text("Internet") }
-            Button(onClick = { onOpen("health") }) { Text("Health") }
-            Button(onClick = { onOpen("notifications") }) { Text("Notifications") }
-            Button(onClick = { onOpen("diagnostics") }) { Text("Diagnostics") }
-            Button(onClick = { onOpen("settings") }) { Text("Settings") }
+        item {
+            Chip(
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Developer tests") },
+                onClick = onDeveloper,
+            )
         }
-        Button(onClick = { onOpen("developer") }) { Text("Developer") }
     }
 }
 
 @Composable
 fun PairingScreen(sas: String?, state: PairingState, onConfirm: () -> Unit, onCancel: () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+    val ready = state == PairingState.WAITING_FOR_USER_CONFIRMATION && sas != null
+    ScalingLazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = RoundScreenPadding,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("Pair with this iPhone?", textAlign = TextAlign.Center)
-        Text(sas ?: "······", textAlign = TextAlign.Center)
-        Button(onClick = onConfirm) { Text("✓") }
-        Button(onClick = onCancel) { Text("X") }
-    }
-}
-
-@Composable
-fun SimpleScreen(title: String, lines: List<String>, onBack: () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(title, textAlign = TextAlign.Center)
-        lines.forEach { Text(it, textAlign = TextAlign.Center) }
-        Button(onClick = onBack) { Text("Back") }
+        item { Text("Confirm pairing", textAlign = TextAlign.Center) }
+        item {
+            Text(
+                if (ready) "Check this code matches iPhone" else "Waiting for verification code",
+                textAlign = TextAlign.Center,
+            )
+        }
+        item { Text(sas ?: "------", textAlign = TextAlign.Center) }
+        if (ready) {
+            item {
+                Chip(
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Code matches") },
+                    onClick = onConfirm,
+                )
+            }
+        }
+        item {
+            Chip(
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Cancel pairing") },
+                onClick = onCancel,
+            )
+        }
     }
 }

@@ -44,3 +44,6 @@ Thumbs.db
 # ---> Build outputs
 build/
 .gradle/
+.gradle-local/
+.android-local/
+wear/.gradle-agent/

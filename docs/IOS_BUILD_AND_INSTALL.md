@@ -1,32 +1,25 @@
-# Gearan iOS — build & install (app reale)
+# Gearan iOS — build and installation
 
-Procedura completa dal sorgente all'iPhone fisico. Non committare mai
-certificati, provisioning profile o password: la firma resta locale.
+The existing Xcode project is `ios/Gearan.xcodeproj`, scheme `Gearan`, bundle ID `com.gearan.ios`. Building for iPhone requires macOS and Xcode; the Windows workspace cannot compile an iOS app.
 
-## 1. Requisiti
-- Mac con Xcode 15+ · Apple ID (gratuito ok, vedi limiti sotto) · iPhone + cavo.
-- Repo clonato; la firma non è nel repository per scelta.
+## GitHub Actions
 
-## 2. Xcode setup (dettaglio in `docs/XCODE_SETUP.md`)
-1. Nuovo progetto iOS → App, SwiftUI, iOS 16+, Bundle ID tuo
-   (es. `com.tuonome.gearan` — deve essere univoco).
-2. Signing & Capabilities → Team = tuo Apple ID.
-3. Aggiungi package locale `ios/` (GearanCore) + i 3 file di `Sources/GearanApp/`.
-4. Info.plist: `NSBluetoothAlwaysUsageDescription` + `UIBackgroundModes` =
-   `bluetooth-central` (vedi `docs/XCODE_SETUP.md` per i testi esatti).
+`.github/workflows/build-ios.yml` runs on pushes and manual dispatches. Its `unsigned` job runs `swift test`, builds the Release app for `iphoneos`, and uploads `Gearan-iOS-Unsigned` (`Gearan-unsigned.ipa`). This file is a build artifact and **cannot be installed on an ordinary iPhone without Apple signing**.
 
-## 3. Installazione su iPhone fisico (consigliata, niente IPA)
-1. Collega l'iPhone → selezionalo come destinazione → Run.
-2. iPhone: Impostazioni → Generali → VPN e gestione dispositivo → autorizza.
-3. Apri Gearan → Add Watch.
+The optional `signed` job exports an Ad Hoc IPA as `Gearan-iOS-Signed` when all four repository Actions secrets exist:
 
-## 4. Archive → Export IPA (se serve il file)
-1. Destinazione "Any iOS Device" → Product → Archive → Distribute App →
-   Development (gratuito) o Ad Hoc/TestFlight (account a pagamento).
-2. Installazione IPA: Xcode → Devices and Simulators, Apple Configurator,
-   AltStore/Sideloadly. Dettagli e limiti (7 giorni firma gratuita):
-   `docs/IPA_INSTALL_IPHONE.md`.
+- `APPLE_CERTIFICATE_BASE64`: base64 of an Apple Distribution `.p12` certificate and its private key.
+- `APPLE_CERTIFICATE_PASSWORD`: password for that `.p12`.
+- `APPLE_PROVISIONING_PROFILE_BASE64`: base64 of an Ad Hoc `.mobileprovision` profile for the bundle ID.
+- `APPLE_TEAM_ID`: Apple Developer Team ID.
 
-## 5. Test rapido post-installazione
-- BLE Scan Debug: stato poweredOn, Watch trovato con RSSI/UUID/service UUID.
-- Primo pairing e reconnect: `docs/HARDWARE_TEST_WATCH4_CLASSIC.md`.
+The profile must include the target iPhone's registered device ID. Configure the secrets in GitHub repository Settings → Secrets and variables → Actions. Do not commit certificates, provisioning profiles, passwords or Team IDs to source files. The workflow must complete successfully before an IPA is called built.
+
+## Build and test locally on a Mac
+
+1. Open `ios/Gearan.xcodeproj` in Xcode and select the `Gearan` scheme.
+2. Select your Apple development team under Signing & Capabilities. Change the bundle ID if `com.gearan.ios` is unavailable to your team.
+3. Run `swift test` in `ios/`, then build or archive the `Gearan` scheme for a physical iPhone.
+4. For direct testing, select the connected iPhone and Run. For an installable IPA, export the archive with an Apple signing profile appropriate to that device.
+
+After installation, verify BLE scan, device information, handshake, SAS, trust and sync on a physical iPhone and Watch. The current pairing path is incomplete; see `STATUS.md` before interpreting a successful build as functional pairing.

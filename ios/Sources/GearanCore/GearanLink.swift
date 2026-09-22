@@ -11,6 +11,7 @@ public enum GearanLink {
     public static let authLen = 32
     public static let maxFramePayload = 512
     public static let maxMessageBytes = 64 * 1024
+    public static let maxTotalChunks = (maxMessageBytes + maxFramePayload - 1) / maxFramePayload
 
     public static let serviceUUID = "6E400001-8A21-4A11-9B5C-F3F2A1E4B001"
     public static let rxUUID = "6E400002-8A21-4A11-9B5C-F3F2A1E4B001"
@@ -99,7 +100,9 @@ public enum GearanLink {
 
     public static func encode(_ f: Frame, authKey: Data) throws -> Data {
         guard f.payload.count <= maxFramePayload else { throw CodecError.tooLarge }
-        guard f.totalChunks >= 1 else { throw CodecError.badChunks }
+        guard f.totalChunks >= 1,
+              Int(f.totalChunks) <= maxTotalChunks,
+              f.chunkIndex < f.totalChunks else { throw CodecError.badChunks }
         var h = Data(capacity: headerLen)
         h.append(contentsOf: [magic0, magic1, version, f.messageType])
         h.appendUInt16BE(f.flags)
@@ -125,9 +128,13 @@ public enum GearanLink {
         let cidx = u16be(b[14], b[15])
         let total = u16be(b[16], b[17])
         let plen = Int(u16be(b[18], b[19]))
-        guard total >= 1 && cidx < total else { throw CodecError.badChunks }
+        guard total >= 1 && Int(total) <= maxTotalChunks && cidx < total else {
+            throw CodecError.badChunks
+        }
         guard plen <= maxFramePayload else { throw CodecError.tooLarge }
-        guard data.count >= headerLen + plen + authLen else { throw CodecError.truncated }
+        let expectedLength = headerLen + plen + authLen
+        guard data.count >= expectedLength else { throw CodecError.truncated }
+        guard data.count == expectedLength else { throw CodecError.tooLarge }
         let payload = data.subdata(in: headerLen..<(headerLen + plen))
         let auth = data.subdata(in: (headerLen + plen)..<(headerLen + plen + authLen))
         let expected = hmac(key: authKey, header: Data(h), payload: payload)
@@ -198,23 +205,46 @@ public final class ReplayWindow {
 /// Fragment reassembly with timeout + concurrency cap.
 public final class Reassembler {
     struct Key: Hashable { var req: UInt32; var type: UInt8 }
-    struct Entry { var total: UInt16; var chunks: [UInt16: Data]; var ts: Date }
+    struct Entry {
+        let total: UInt16
+        var chunks: [UInt16: Data]
+        var byteCount: Int
+        var ts: Date
+    }
     private var buffers: [Key: Entry] = [:]
     public var timeout: TimeInterval = 10
     public var maxConcurrent = 8
     public init() {}
     public func feed(_ f: GearanLink.Frame) throws -> Data? {
         buffers = buffers.filter { Date().timeIntervalSince($0.value.ts) <= timeout }
-        if (f.totalChunks == 1) { return f.payload }
         let k = Key(req: f.requestId, type: f.messageType)
+        guard f.totalChunks >= 1,
+              Int(f.totalChunks) <= GearanLink.maxTotalChunks,
+              f.chunkIndex < f.totalChunks,
+              f.payload.count <= GearanLink.maxFramePayload else {
+            buffers.removeValue(forKey: k)
+            throw GearanLink.CodecError.badChunks
+        }
+        if (f.totalChunks == 1) { return f.payload }
         var e = buffers[k]
         if (e == nil) {
             guard buffers.count < maxConcurrent else { throw GearanLink.CodecError.tooManyConcurrent }
-            e = Entry(total: f.totalChunks, chunks: [:], ts: Date())
+            e = Entry(total: f.totalChunks, chunks: [:], byteCount: 0, ts: Date())
             buffers[k] = e
         }
-        guard e!.total == f.totalChunks else { throw GearanLink.CodecError.chunkMismatch }
-        e!.chunks[f.chunkIndex] = f.payload; e!.ts = Date()
+        guard e!.total == f.totalChunks else {
+            buffers.removeValue(forKey: k)
+            throw GearanLink.CodecError.chunkMismatch
+        }
+        let previousSize = e!.chunks[f.chunkIndex]?.count ?? 0
+        let newByteCount = e!.byteCount - previousSize + f.payload.count
+        guard newByteCount <= GearanLink.maxMessageBytes else {
+            buffers.removeValue(forKey: k)
+            throw GearanLink.CodecError.messageTooLarge
+        }
+        e!.chunks[f.chunkIndex] = f.payload
+        e!.byteCount = newByteCount
+        e!.ts = Date()
         buffers[k] = e
         if (e!.chunks.count == Int(e!.total)) {
             var out = Data()
