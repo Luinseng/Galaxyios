@@ -5,7 +5,7 @@ Target: Samsung Galaxy Watch4 Classic + iPhone over Gearan BLE. System provision
 | Area | Current evidence | Remaining work |
 |---|---|---|
 | Wear OS | Release APK built and installed on SM-R870; 18 unit tests pass. On-device BLE advertising, GATT service, P-256 crypto self-test, 120 s timeout and retry pass. | Complete the connection and frame dispatch into the pairing manager. |
-| iOS | Swift package and Xcode project are present. GitHub Actions has an unsigned IPA lane and an optional signed IPA lane. | Run `swift test` and Xcode Release build on macOS; test with a physical iPhone. Signed IPA requires Apple signing assets. |
+| iOS | Swift tests and the unsigned `iphoneos` Release IPA passed [GitHub Actions run 35790330446](https://github.com/Luinseng/Galaxyios/actions/runs/35790330446). | Test with a physical iPhone. Signed IPA requires Apple signing assets; the signed CI lane was skipped. |
 | Shared protocol | 5 pytest tests and 23 direct Python checks pass. | Verify real Watch-to-iPhone handshake and sync. |
 
 Watch evidence and APK checksum: [`artifacts/watch-ui/TEST_REPORT.md`](artifacts/watch-ui/TEST_REPORT.md).
