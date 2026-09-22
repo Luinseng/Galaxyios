@@ -80,7 +80,7 @@ jobs:
 
   startup-smoke:
     runs-on: macos-15-intel
-    timeout-minutes: 12
+    timeout-minutes: 16
     defaults:
       run:
         working-directory: ios
@@ -102,7 +102,7 @@ jobs:
               exit 1
             }
       - name: Launch and keep Gearan alive
-        timeout-minutes: 6
+        timeout-minutes: 11
         run: |
           SIMULATOR_ID=$(xcrun simctl list -j devices available | python3 -c 'import json,sys; data=json.load(sys.stdin); print(next(d["udid"] for group in data["devices"].values() for d in group if d["name"].startswith("iPhone") and d["isAvailable"]))')
           xcrun simctl boot "$SIMULATOR_ID"
@@ -111,9 +111,13 @@ jobs:
           xcrun simctl launch "$SIMULATOR_ID" com.gearan.ios | tee build/simulator-launch.log
           APP_PID=$(awk -F ': ' '/com.gearan.ios:/ {print $2}' build/simulator-launch.log)
           test -n "$APP_PID"
-          sleep 5
+          sleep 10
           xcrun simctl io "$SIMULATOR_ID" screenshot build/simulator-home.png
-          xcrun simctl spawn "$SIMULATOR_ID" /bin/ps -p "$APP_PID" -o comm= | grep -q Gearan
+          mkdir -p build/crash-reports
+          for dir in "$HOME/Library/Logs/DiagnosticReports" "$HOME/Library/Developer/CoreSimulator/Devices/$SIMULATOR_ID/data/Library/Logs/DiagnosticReports"; do
+            cp "$dir"/Gearan* build/crash-reports/ 2>/dev/null || true
+          done
+          ps -p "$APP_PID" -o pid=,comm= | tee build/simulator-process.log | grep -q Gearan
       - name: Upload simulator evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -122,7 +126,9 @@ jobs:
           path: |
             ios/build/simulator-build.log
             ios/build/simulator-launch.log
+            ios/build/simulator-process.log
             ios/build/simulator-home.png
+            ios/build/crash-reports/
           if-no-files-found: warn
 
   # Optional lane: signed IPA. Runs ONLY when Apple signing secrets exist
