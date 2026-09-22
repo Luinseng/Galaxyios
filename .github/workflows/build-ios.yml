@@ -79,7 +79,8 @@ jobs:
           if-no-files-found: error
 
   startup-smoke:
-    runs-on: macos-latest
+    runs-on: macos-15-intel
+    timeout-minutes: 12
     defaults:
       run:
         working-directory: ios
@@ -101,6 +102,7 @@ jobs:
               exit 1
             }
       - name: Launch and keep Gearan alive
+        timeout-minutes: 6
         run: |
           SIMULATOR_ID=$(xcrun simctl list -j devices available | python3 -c 'import json,sys; data=json.load(sys.stdin); print(next(d["udid"] for group in data["devices"].values() for d in group if d["name"].startswith("iPhone") and d["isAvailable"]))')
           xcrun simctl boot "$SIMULATOR_ID"
